@@ -307,7 +307,7 @@ func newApp(db *gorm.DB, config serverConfig) *app {
 						ctx.SetValue("auth_status", "ok")
 					}else{
 						ctx.SetValue("auth_status", "fail")
-						ctx.SetValue("auth_msg", "You are already loggedin elsewhere")
+						ctx.SetValue("auth_msg", "You are already logged in")
 					}
 					return true
 				}else{
@@ -1239,6 +1239,8 @@ func updatedChatFocus(m *model){
 
 type newBannerMsg string
 
+// func updateWindowTitle
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 			tiCmd tea.Cmd
@@ -1703,8 +1705,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 													if(channel.OwnerID==m.viewChatModel.id){
 														if(channel.ID!="global"){
 
-
-
 															removeUserFromChannel(m.app, m.viewChatModel.id, channel.ID)
 															updateChannelMemberList(updateChannelMemberListParameters{
 																app: m.app,
@@ -1965,7 +1965,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 								Where("LOWER(name) = ?", strings.ToLower(newUsername)).
 								First(context.Background())
 
-							if(err!=nil){
+							if(err==nil){
 								m.viewRegistrationModel.feedbackViewport.SetContent("Username already exists")
 								return m,nil
 							}
