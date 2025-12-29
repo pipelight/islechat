@@ -175,7 +175,9 @@ func (a *app) sendMessage(msg chatMsg) {
 		a.mu.RLock()
 
 		for _, p := range a.channelMemberListCache[msg.channel].onlineMembers {
-			go p.prog.Send(msg)
+			if(p.loggedIn){
+				go p.prog.Send(msg)
+			}
 		}
 
 		a.mu.RUnlock()
@@ -1694,6 +1696,41 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 													}else{
 														sendIslebotMessage(&m, "You are the owner of this channel. You cannot leave it but you can delete it with /chan delete")
 													}
+												case "delete":
+													m.app.mu.RLock()
+													channel := m.app.channels[m.viewChatModel.channels[m.viewChatModel.currentChannel].channelId]
+													m.app.mu.RUnlock()
+													if(channel.OwnerID==m.viewChatModel.id){
+														if(channel.ID!="global"){
+
+
+
+															removeUserFromChannel(m.app, m.viewChatModel.id, channel.ID)
+															updateChannelMemberList(updateChannelMemberListParameters{
+																app: m.app,
+																userId: m.viewChatModel.id,
+																change: UserChannnelLeave,
+																channelId: channel.ID,
+															})
+															id := m.viewChatModel.currentChannel
+															m.viewChatModel.channels = append(m.viewChatModel.channels[:id], m.viewChatModel.channels[id+1:]...)
+															m.viewChatModel.currentChannel=0
+															m.app.mu.Lock()
+															m.app.sessions[m.viewChatModel.id].currentChannelId="global"
+															m.viewChatModel.memberList=m.app.channelMemberListCache[m.viewChatModel.channels[m.viewChatModel.currentChannel].channelId]
+															m.app.mu.Unlock()
+															updateChannelList(&m)
+															updateUserList(&m)
+															reloadMessagesChannelSwitch(&m)
+															if(!channel.Public){
+																sendIslebotMessagePermanent(m.app, fmt.Sprintf("@%s left the channel", m.viewChatModel.id), channel.ID)
+															}
+														}else{
+															sendIslebotMessage(&m, "You cannot delete #global")
+														}
+													}else{
+														sendIslebotMessage(&m, "You are not the owner of this channel.")
+													}
 												default:
 													sendIslebotMessage(&m, chanHelpMsg)
 											}
@@ -1898,6 +1935,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 							if(len(newUsername)<3 || len(newUsername)>10){
 								m.viewRegistrationModel.feedbackViewport.SetContent("Username must be 3-10 chars")
+								return m,nil
+							}
+
+							re := regexp.MustCompile(`^[a-zA-Z0-9_-]{1,10}$`)
+							if (!re.MatchString(newUsername)) {
+								m.viewRegistrationModel.feedbackViewport.SetContent("Username contains bad chars")
 								return m,nil
 							}
 
