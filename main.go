@@ -1644,7 +1644,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 													m.app.mu.RLock()
 													channel := m.app.channels[m.viewChatModel.channels[m.viewChatModel.currentChannel].channelId]
 													m.app.mu.RUnlock()
-													if(channel.OwnerID==m.viewChatModel.id){
+													if(channel.OwnerID==m.viewChatModel.id || (channel.ID=="global" && m.viewChatModel.id == m.app.config.AdminUsername)){
 														if(len(m.viewChatModel.textarea.Value())>12){
 															banner := m.viewChatModel.textarea.Value()[13:]
 															blen := BannerWidth(banner)
