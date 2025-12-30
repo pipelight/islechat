@@ -1,3 +1,6 @@
 .ssh/
 islechat
 islechat.db
+
+# Nix
+/.direnv
